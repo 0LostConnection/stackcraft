@@ -1,0 +1,37 @@
+appId: com.stackcraft.app
+productName: StackCraft
+copyright: Copyright © 2026 Geovane Saraiva da Silva
+extraMetadata:
+  main: desktop/main.mjs
+asarUnpack:
+  - scripts/import-minecraft.mjs
+directories:
+  output: desktop/release
+  buildResources: desktop/icons
+files:
+  - desktop/main.mjs
+  - desktop/preload.cjs
+  - desktop/user-data.mjs
+  - server/src/**/*
+  - packages/core/dist/**/*
+  - client/dist/**/*
+  - scripts/import-minecraft.mjs
+  - data/sources.manifest.json
+  - package.json
+  - server/package.json
+  - packages/core/package.json
+  - node_modules/**/*
+asar: true
+# Root package.json dependencies (express, cors, @minecraft-calc/core) are copied into the asar.
+npmRebuild: false
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Game
+  icon: desktop/icons
+mac:
+  target:
+    - dmg
+  category: public.app-category.games
+  icon: desktop/icons

@@ -89,6 +89,8 @@ export async function fetchHealth(): Promise<{
   ok: boolean;
   version: string;
   items: number;
+  dataReady?: boolean;
+  dataHint?: string;
 }> {
   const res = await fetch(`${API}/api/health`);
   return res.json();

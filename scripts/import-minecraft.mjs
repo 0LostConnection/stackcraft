@@ -10,7 +10,9 @@ import { fileURLToPath } from "node:url";
 import { execSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = process.env.STACKCRAFT_ROOT
+  ? path.resolve(process.env.STACKCRAFT_ROOT)
+  : path.resolve(__dirname, "..");
 
 const jarEnv = process.env.MINECRAFT_JAR?.trim();
 if (!jarEnv) {
@@ -30,6 +32,22 @@ const MISSING_TEXTURE_JAR = "assets/minecraft/textures/misc/unknown_pack.png";
 /** Block texture suffixes that are parts of a multi-state block, not inventory icons */
 const BLOCK_PART_SUFFIX =
   /_(top|bottom|side|front|back|left|right|inner|outer|on|off|open|closed|lit|unlit|powered|stage\d*|north|south|east|west|up|down|single|double|line|cross|overlay|particle|\d+)$/;
+
+/** Machine-readable progress for StackCraft desktop (stdout, unbuffered). */
+function reportProgress(percent, phaseId, extra = {}) {
+  const payload = {
+    percent: Math.min(100, Math.max(0, Math.round(percent))),
+    phaseId,
+    ...extra,
+  };
+  const line = `STACKCRAFT_PROGRESS:${JSON.stringify(payload)}\n`;
+  fs.writeSync(1, line);
+  try {
+    fs.fsyncSync(1);
+  } catch {
+    /* stdout may not be fsync-able in some environments */
+  }
+}
 
 const CRAFT_TYPES = new Set([
   "minecraft:crafting_shaped",
@@ -243,11 +261,13 @@ async function main() {
   }
 
   console.log(`Importing from ${path.basename(JAR)}`);
+  reportProgress(2, "jar");
 
   fs.mkdirSync(OUT_DATA, { recursive: true });
   fs.rmSync(OUT_TEXTURES, { recursive: true, force: true });
   fs.mkdirSync(OUT_TEXTURES, { recursive: true });
 
+  reportProgress(8, "registry");
   const lang = unzipJson(JAR, "assets/minecraft/lang/en_us.json");
   const names = new Map();
   for (const [key, value] of Object.entries(lang)) {
@@ -265,10 +285,11 @@ async function main() {
   );
   const itemPngSet = new Set(itemPngList);
 
-  console.log("Loading models…");
+  reportProgress(14, "models");
   const itemModels = loadAllModels(JAR, "item");
   const blockModels = loadAllModels(JAR, "block");
 
+  reportProgress(22, "tags");
   const tags = [];
   const tagFiles = unzipList(JAR, "data/minecraft/tags/item/");
   for (const file of tagFiles) {
@@ -285,6 +306,7 @@ async function main() {
     }
   }
 
+  reportProgress(32, "recipes");
   const recipes = [];
   const recipeFiles = unzipList(JAR, "data/minecraft/recipe/");
   for (const file of recipeFiles) {
@@ -313,7 +335,17 @@ async function main() {
   let withIcon = 0;
   const iconCache = new Map();
 
-  const items = [...knownIds].sort().map((id) => {
+  const sortedIds = [...knownIds].sort();
+  const iconTotal = sortedIds.length;
+  const items = [];
+  for (let i = 0; i < sortedIds.length; i++) {
+    const id = sortedIds[i];
+    if (i === 0 || i === iconTotal - 1 || i % 40 === 0) {
+      const slice = 38;
+      const pct = 42 + Math.floor((i / Math.max(iconTotal, 1)) * slice);
+      reportProgress(pct, "icons", { current: i + 1, total: iconTotal });
+    }
+
     const slug = id.replace("minecraft:", "");
     let jarPath = iconCache.get(slug);
     if (jarPath === undefined) {
@@ -331,14 +363,14 @@ async function main() {
       withIcon++;
     }
 
-    return {
+    items.push({
       id,
       name: names.get(id) ?? slug.replace(/_/g, " "),
       texture: hasTexture ? `vanilla/items/${slug}.png` : "vanilla/items/_missing.png",
       hasTexture,
       source: "vanilla",
-    };
-  });
+    });
+  }
 
   const manifest = {
     version: "26.1.2",
@@ -369,6 +401,7 @@ async function main() {
       "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/lang/es_es.json",
   };
 
+  reportProgress(82, "lang");
   for (const [code, url] of Object.entries(REMOTE_LANG)) {
     try {
       const res = await fetch(url);
@@ -391,6 +424,7 @@ async function main() {
     }
   }
 
+  reportProgress(92, "write");
   fs.writeFileSync(path.join(OUT_DATA, "manifest.json"), JSON.stringify(manifest, null, 2));
   fs.writeFileSync(path.join(OUT_DATA, "items.json"), JSON.stringify(items));
   fs.writeFileSync(path.join(OUT_DATA, "recipes.json"), JSON.stringify(recipes));
@@ -413,6 +447,7 @@ async function main() {
   fs.mkdirSync(path.dirname(sourcesManifest), { recursive: true });
   fs.writeFileSync(sourcesManifest, JSON.stringify(sources, null, 2));
 
+  reportProgress(100, "done");
   console.log(manifest.counts);
   console.log(`Data written to ${OUT_DATA}`);
 }
