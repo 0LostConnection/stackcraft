@@ -1,57 +1,57 @@
-# StackCraft — Documentação técnica para agentes de IA
+# StackCraft — Technical documentation for AI agents
 
-Este arquivo descreve a arquitetura, convenções e pontos de extensão do projeto **StackCraft** (`minecraft-material-calc`). Use-o como contexto principal em novas iterações com IA antes de alterar código.
+This file describes the architecture, conventions, and extension points of the **StackCraft** project (`minecraft-material-calc`). Use it as the primary context in new AI iterations before changing code.
 
-## Propósito do produto
+## Product purpose
 
-Calculadora web de materiais para construções no Minecraft. O usuário informa **itens desejados** (quantidades) e o sistema expande **receitas** até **materiais base** configuráveis, exibindo totais em unidades e em **pacotes de 64** (pilha do inventário).
+Web material calculator for Minecraft builds. The user specifies **desired items** (quantities) and the system expands **recipes** down to configurable **base materials**, showing totals in units and in **stacks of 64** (inventory stack size).
 
-Duas listas no painel direito (sempre separadas):
+Two lists in the right panel (always separate):
 
-1. **Lista para construir** — itens pedidos pelo usuário (atualiza em tempo real; pacotes + resto).
-2. **Materiais para craftar** — ingredientes base após expansão de receitas (só após clicar em Calcular; some quando a lista de pedidos muda ou fica vazia).
+1. **Build list** — items requested by the user (updates in real time; stacks + remainder).
+2. **Materials to craft** — base ingredients after recipe expansion (only after clicking Calculate; disappears when the request list changes or becomes empty).
 
 ## Stack
 
-| Camada | Tecnologia |
-|--------|------------|
+| Layer | Technology |
+|-------|------------|
 | Runtime | Node.js ≥ 20 |
 | Monorepo | npm workspaces |
-| Lógica | `@minecraft-calc/core` (TypeScript → `dist/`) |
-| API | Express 4 (`server/`, porta **3847**) |
-| UI | React 19 + Vite 6 (`client/`, porta **5173**, proxy `/api` e `/textures`) |
-| Dados | JSON gerado em `data/` + PNG em `client/public/textures/` |
-| Versão Minecraft importada | **26.1.2** (vanilla JAR) |
-| Tag Git release | **v1.0.0** |
+| Logic | `@minecraft-calc/core` (TypeScript → `dist/`) |
+| API | Express 4 (`server/`, port **3847**) |
+| UI | React 19 + Vite 6 (`client/`, port **5173**, proxy `/api` and `/textures`) |
+| Data | JSON generated in `data/` + PNG in `client/public/textures/` |
+| Imported Minecraft version | **26.1.2** (vanilla JAR) |
+| Git release tag | **v1.0.0** |
 
-## Estrutura do repositório
+## Repository structure
 
 ```
 minecraft-material-calc/
-├── AGENTS.md                 ← este arquivo
-├── README.md                 ← guia do usuário
-├── package.json              ← workspaces + scripts raiz
-├── packages/core/            ← calculadora (sem I/O)
+├── AGENTS.md                 ← this file
+├── README.md                 ← user guide
+├── package.json              ← workspaces + root scripts
+├── packages/core/            ← calculator (no I/O)
 │   └── src/{types,calculator,stacks,index}.ts
 ├── server/
 │   └── src/{index.js,data-loader.js,localize.js}
 ├── client/
 │   ├── src/
-│   │   ├── App.tsx           ← estado principal
+│   │   ├── App.tsx           ← main state
 │   │   ├── api.ts            ← fetch + setApiLang
 │   │   ├── i18n/             ← UI: en (default), pt, es
 │   │   ├── components/       ← UI (LanguageSelector, ResultsPanel, …)
 │   │   └── hooks/useStackFormat.ts
 │   └── public/textures/vanilla/items/*.png
 ├── data/
-│   ├── sources.manifest.json ← fontes habilitadas (vanilla + mods futuros)
+│   ├── sources.manifest.json ← enabled sources (vanilla + future mods)
 │   └── vanilla/
 │       ├── items.json, recipes.json, tags.json, manifest.json
-│       └── lang/{en_us,pt_br,es_es}.json  ← nomes de itens por idioma
+│       └── lang/{en_us,pt_br,es_es}.json  ← item names by language
 └── scripts/import-minecraft.mjs
 ```
 
-## Fluxo de arquitetura
+## Architecture flow
 
 ```mermaid
 flowchart LR
@@ -59,7 +59,7 @@ flowchart LR
   Import[import-minecraft.mjs]
   Data[data/vanilla/*.json]
   Tex[public/textures/vanilla/items]
-  Core[@minecraft-calc/core]
+  Core["@minecraft-calc/core"]
   API[Express server]
   UI[React client]
 
@@ -71,30 +71,30 @@ flowchart LR
   Tex --> UI
 ```
 
-## Pipeline de dados (`npm run import:vanilla`)
+## Data pipeline (`npm run import:vanilla`)
 
-**Entrada:** variável de ambiente **`MINECRAFT_JAR`** (obrigatória, sem caminho padrão no script).
+**Input:** **`MINECRAFT_JAR`** environment variable (required; no default path in the script).
 
-**O que o import faz:**
+**What the import does:**
 
-1. **Registro de itens** — apenas chaves `item.minecraft.*` e `block.minecraft.*` do `en_us.json` (catálogo unificado; não cria itens fantasmas a partir de cada PNG de bloco).
-2. **Receitas** — `data/minecraft/recipe/*.json`: shaped, shapeless, smelting, blasting, smoking, campfire_cooking, stonecutting.
-3. **Tags** — `data/minecraft/tags/item/*.json`; valores filtrados ao registro.
-4. **Ícones (`iconPolicy: item-only`)** — uma PNG por item em `client/public/textures/vanilla/items/<slug>.png`:
-   - Prioridade: `textures/item/<slug>.png` → modelos `assets/minecraft/models/item|block/<slug>.json` (layer0, etc.) → bloco único `textures/block/<slug>.png` se não for parte multipart (`_top`, `_bottom`, …).
-   - Sem ícone: `hasTexture: false`; UI usa placeholder SVG (não versionar `_missing.png`).
-5. **Traduções de nomes** — `data/vanilla/lang/en_us.json` do JAR; `pt_br` e `es_es` baixados de [minecraft-assets 1.21.4](https://github.com/InventivetalentDev/minecraft-assets) (mapa `minecraft:<id>` → nome).
+1. **Item registry** — only `item.minecraft.*` and `block.minecraft.*` keys from `en_us.json` (unified catalog; does not create phantom items from every block PNG).
+2. **Recipes** — `data/minecraft/recipe/*.json`: shaped, shapeless, smelting, blasting, smoking, campfire_cooking, stonecutting.
+3. **Tags** — `data/minecraft/tags/item/*.json`; values filtered to the registry.
+4. **Icons (`iconPolicy: item-only`)** — one PNG per item in `client/public/textures/vanilla/items/<slug>.png`:
+   - Priority: `textures/item/<slug>.png` → models `assets/minecraft/models/item|block/<slug>.json` (layer0, etc.) → single block `textures/block/<slug>.png` if not a multipart part (`_top`, `_bottom`, …).
+   - No icon: `hasTexture: false`; UI uses placeholder SVG (do not commit `_missing.png`).
+5. **Name translations** — `data/vanilla/lang/en_us.json` from the JAR; `pt_br` and `es_es` downloaded from [minecraft-assets 1.21.4](https://github.com/InventivetalentDev/minecraft-assets) (map `minecraft:<id>` → name).
 
-**Saída:** atualiza `data/sources.manifest.json` com entrada `vanilla`.
+**Output:** updates `data/sources.manifest.json` with a `vanilla` entry.
 
-## Modelo de dados
+## Data model
 
 ### `ItemDef` (`packages/core/src/types.ts`)
 
 ```ts
 {
   id: "minecraft:oak_planks",
-  name: "Oak Planks",           // inglês em items.json; API sobrescreve via lang
+  name: "Oak Planks",           // English in items.json; API overrides via lang
   texture: "vanilla/items/oak_planks.png",
   hasTexture?: boolean,
   source: "vanilla"
@@ -104,37 +104,37 @@ flowchart LR
 ### `RecipeDef`
 
 - `resultId`, `resultCount`, `ingredients: { id, count, tag? }`
-- `id` ingrediente pode ser tag: `#minecraft:planks`
+- Ingredient `id` can be a tag: `#minecraft:planks`
 
 ### `CalculateOptions`
 
-- `baseMaterials: ItemId[]` — parar expansão nesses itens.
-- `tagChoices: Record<tagId, ItemId>` — resolver tags (ex. tábuas de carvalho).
-- `recipeChoices: Record<resultId, recipeId>` — preferência de receita (pouco usado na UI).
+- `baseMaterials: ItemId[]` — stop expansion at these items.
+- `tagChoices: Record<tagId, ItemId>` — resolve tags (e.g. oak planks).
+- `recipeChoices: Record<resultId, recipeId>` — recipe preference (rarely used in the UI).
 
-### Expansão (`MaterialCalculator`)
+### Expansion (`MaterialCalculator`)
 
-- Greedy: para cada item necessário, escolhe receita (crafting preferida; senão primeira disponível).
-- `batches = ceil(count / resultCount)`; ingredientes multiplicados.
-- Ciclo de receita → trata como material final (evita loop infinito).
-- Sem receita → acumula em `unresolved` e no total.
+- Greedy: for each required item, picks a recipe (crafting preferred; otherwise first available).
+- `batches = ceil(count / resultCount)`; ingredients multiplied.
+- Recipe cycle → treated as a final material (avoids infinite loop).
+- No recipe → accumulates in `unresolved` and in the total.
 
-## API HTTP (`server/src/index.js`)
+## HTTP API (`server/src/index.js`)
 
 Base: `http://localhost:3847`
 
-| Método | Rota | Query/body | Notas |
-|--------|------|------------|-------|
+| Method | Route | Query/body | Notes |
+|--------|-------|------------|-------|
 | GET | `/api/health` | — | `version`, `items`, `recipes`, `locales` |
-| GET | `/api/items` | `q`, `limit`, **`lang`** | Busca por id/nome |
-| GET | `/api/items/:id` | **`lang`** | Item + receitas |
-| GET | `/api/tags/:id` | **`lang`** | `values` + `items` localizados |
-| POST | `/api/calculate` | body + **`lang`** (query) | Ver abaixo |
-| — | `/textures/*` | — | Static de `client/public/textures` |
+| GET | `/api/items` | `q`, `limit`, **`lang`** | Search by id/name |
+| GET | `/api/items/:id` | **`lang`** | Item + recipes |
+| GET | `/api/tags/:id` | **`lang`** | `values` + localized `items` |
+| POST | `/api/calculate` | body + **`lang`** (query) | See below |
+| — | `/textures/*` | — | Static from `client/public/textures` |
 
-**`lang`:** `en` / `en_us` (default), `pt` / `pt_br`, `es` / `es_es`. Implementação em `server/src/localize.js`.
+**`lang`:** `en` / `en_us` (default), `pt` / `pt_br`, `es` / `es_es`. Implemented in `server/src/localize.js`.
 
-**Cache de idiomas:** `langMaps` inicia como `null`; não usar `{}` vazio como “já carregado” (bug corrigido: `langMaps !== null`).
+**Language cache:** `langMaps` starts as `null`; do not use empty `{}` as “already loaded” (fixed bug: `langMaps !== null`).
 
 **POST `/api/calculate` body:**
 
@@ -147,93 +147,93 @@ Base: `http://localhost:3847`
 }
 ```
 
-## Cliente React — regras de estado (`App.tsx`)
+## React client — state rules (`App.tsx`)
 
-**Invalidar resultado de craft** (`setResult(null)`) quando mudam:
+**Invalidate craft result** (`setResult(null)`) when these change:
 
-- `targets` (adicionar, remover, quantidade)
+- `targets` (add, remove, quantity)
 - `baseMaterials`
 - `tagChoices`
 
-**Ao remover todos os targets:** `ResultsPanel` usa `craftResult = hasTargets ? result : null` — nunca mostra craft órfão.
+**When all targets are removed:** `ResultsPanel` uses `craftResult = hasTargets ? result : null` — never shows orphaned craft output.
 
-**Idioma UI:** `I18nProvider` → `locale`: `en` | `pt` | `es` (default **en**), `localStorage` key `stackcraft-locale`.
+**UI language:** `I18nProvider` → `locale`: `en` | `pt` | `es` (default **en**), `localStorage` key `stackcraft-locale`.
 
-**Idioma API:** `setApiLang(LOCALE_API[locale])` em `useEffect`; todas as chamadas em `api.ts` usam `?lang=`.
+**API language:** `setApiLang(LOCALE_API[locale])` in `useEffect`; all calls in `api.ts` use `?lang=`.
 
-**Ao trocar `localeTag`:** re-busca nomes dos itens em `targets` via `fetchItem`.
+**When `localeTag` changes:** re-fetch item names in `targets` via `fetchItem`.
 
-**Componentes principais:**
+**Main components:**
 
-| Componente | Responsabilidade |
-|------------|------------------|
-| `LanguageSelector` | Bandeiras; fechado = círculo; aberto = pill; clique fechado abre, aberto seleciona |
-| `ItemSearch` | Autocomplete itens |
-| `ResultsPanel` | Duas seções + legenda HTML via `t("legend")` |
-| `MaterialListSection` | Lista com `useStackFormat()` |
-| `ItemIcon` | Textura local ou placeholder SVG |
+| Component | Responsibility |
+|-----------|----------------|
+| `LanguageSelector` | Flags; closed = circle; open = pill; click when closed opens, when open selects |
+| `ItemSearch` | Item autocomplete |
+| `ResultsPanel` | Two sections + HTML legend via `t("legend")` |
+| `MaterialListSection` | List with `useStackFormat()` |
+| `ItemIcon` | Local texture or placeholder SVG |
 
-## Internacionalização
+## Internationalization
 
 ### UI (`client/src/i18n/locales/{en,pt,es}.json`)
 
-Chaves usadas em `t("chave", { vars })`. Inglês é fallback se chave faltar.
+Keys used in `t("key", { vars })`. English is the fallback if a key is missing.
 
-### Nomes de itens (`data/vanilla/lang/*.json`)
+### Item names (`data/vanilla/lang/*.json`)
 
-Servidor mescla em `localizeItem`. Não duplicar nomes em `items.json` para outros idiomas — só atualizar JSON de lang após reimport.
+Server merges in `localizeItem`. Do not duplicate names in `items.json` for other languages — only update lang JSON after reimport.
 
-## Comandos de desenvolvimento
+## Development commands
 
 ```bash
 cd /home/lost/Projects/minecraft-material-calc
 npm install
 MINECRAFT_JAR=/path/to/client.jar npm run import:vanilla
-npm run build -w @minecraft-calc/core   # obrigatório antes do server se core mudou
+npm run build -w @minecraft-calc/core   # required before server if core changed
 npm run dev:server              # :3847
 npm run dev:client              # :5173
-npm run build                   # produção: core + client; server serve client/dist se NODE_ENV=production
+npm run build                   # production: core + client; server serves client/dist if NODE_ENV=production
 ```
 
-## Extensão para mods (planejado, não implementado end-to-end)
+## Mod extension (planned, not implemented end-to-end)
 
-1. Gerar `data/mods/<modid>/` com o mesmo formato que `data/vanilla/` (`items.json`, `recipes.json`, `tags.json`, opcional `lang/`).
-2. Copiar texturas para `client/public/textures/mods/<modid>/items/`.
-3. Registrar em `data/sources.manifest.json` com `"enabled": true`.
-4. `server/src/data-loader.js` já faz merge de todas as fontes habilitadas; último `itemsById` ganha em duplicata de id.
+1. Generate `data/mods/<modid>/` with the same format as `data/vanilla/` (`items.json`, `recipes.json`, `tags.json`, optional `lang/`).
+2. Copy textures to `client/public/textures/mods/<modid>/items/`.
+3. Register in `data/sources.manifest.json` with `"enabled": true`.
+4. `server/src/data-loader.js` already merges all enabled sources; last `itemsById` wins on duplicate ids.
 
-Generalizar `scripts/import-minecraft.mjs` ou criar `import-jar.mjs` parametrizado por caminho JAR + `sourceId`.
+Generalize `scripts/import-minecraft.mjs` or create `import-jar.mjs` parameterized by JAR path + `sourceId`.
 
-## Limitações conhecidas
+## Known limitations
 
-- **~1440 itens** sem ícone 2D (modelos 3D only no jogo, ex. cercas).
-- **Traduções pt/es** vêm de assets 1.21.4 — nomes de itens novos do 26.1.2 podem faltar (fallback: `en_us` → `item.name`).
-- **Uma receita por expansão** — não otimiza custo mínimo global; múltiplas receitas para o mesmo resultado usam heurística (crafting primeiro).
-- **Sem crafting table 3×3 grid UI** — só matemática de ingredientes.
-- Receitas de modded com formatos NeoForge custom podem não parsear se o JSON divergir do vanilla.
+- **~1440 items** without a 2D icon (3D-only models in-game, e.g. fences).
+- **pt/es translations** come from 1.21.4 assets — names for new 26.1.2 items may be missing (fallback: `en_us` → `item.name`).
+- **One recipe per expansion** — does not optimize global minimum cost; multiple recipes for the same result use a heuristic (crafting first).
+- **No 3×3 crafting table grid UI** — ingredient math only.
+- Modded recipes with custom NeoForge formats may not parse if JSON diverges from vanilla.
 
-## Convenções para alterações (IA)
+## Conventions for changes (AI)
 
-1. **Escopo mínimo** — não refatorar fora do pedido.
-2. **Lógica de cálculo** só em `packages/core`; rebuild core após mudança TS.
-3. **Novos campos em itens/receitas** — atualizar `types.ts`, import script, `data-loader`, API enrichment e tipos em `client/src/api.ts`.
-4. **UI** — manter tema Minecraft (variáveis CSS em `global.css` / `app.css`); texturas `image-rendering: pixelated`.
-5. **Textos visíveis** — adicionar chaves nos três JSON de `i18n/locales/`; inglês default.
-6. **Não commitar** `node_modules/`, `.env`, nem assets extraídos do Minecraft (`data/vanilla/*.json`, `lang/`, `client/public/textures/vanilla/items/*`). Pastas vazias usam `.gitkeep`. Servidor: `inspectDataFiles` + `dataReady` em `/api/health`; rotas de jogo retornam 503 sem import.
-7. **Testar manualmente:** 30 `oak_fence` + base `oak_log` + tag planks → **13 oak_log**; remover targets → craft some; trocar idioma → nomes da API mudam.
+1. **Minimal scope** — do not refactor outside the request.
+2. **Calculation logic** only in `packages/core`; rebuild core after TS changes.
+3. **New fields on items/recipes** — update `types.ts`, import script, `data-loader`, API enrichment, and types in `client/src/api.ts`.
+4. **UI** — keep Minecraft theme (CSS variables in `global.css` / `app.css`); textures `image-rendering: pixelated`.
+5. **Visible text** — add keys in all three `i18n/locales/` JSON files; English default.
+6. **Do not commit** `node_modules/`, `.env`, or Minecraft-extracted assets (`data/vanilla/*.json`, `lang/`, `client/public/textures/vanilla/items/*`). Empty folders use `.gitkeep`. Server: `inspectDataFiles` + `dataReady` on `/api/health`; game routes return 503 without import.
+7. **Manual test:** 30 `oak_fence` + base `oak_log` + tag planks → **13 oak_log**; remove targets → craft disappears; change language → API names change.
 
-## Histórico relevante de decisões
+## Relevant decision history
 
-| Decisão | Motivo |
-|---------|--------|
-| Catálogo só item+block do lang | Evitar `oak_door_top` como item separado |
-| Pasta única `vanilla/items/` | Um ícone por entrada de inventário |
-| `en` default na UI | Pedido do usuário; MC JAR só traz `en_us` nativo |
-| Sem assets MC no git | Licença + repo público; import local obrigatório |
-| `MINECRAFT_JAR` sem default | Evitar caminhos hardcoded por máquina |
-| Invalidar `result` ao mudar lista | Bug: craft permanecia após remover itens |
-| LanguageSelector sem overlay hitarea | Overlay impedia reabrir após seleção |
+| Decision | Reason |
+|----------|--------|
+| Catalog from lang item+block only | Avoid `oak_door_top` as a separate item |
+| Single `vanilla/items/` folder | One icon per inventory entry |
+| `en` default in UI | User request; MC JAR only ships native `en_us` |
+| No MC assets in git | License + public repo; local import required |
+| `MINECRAFT_JAR` with no default | Avoid machine-specific hardcoded paths |
+| Invalidate `result` when list changes | Bug: craft persisted after removing items |
+| LanguageSelector without overlay hitarea | Overlay prevented reopening after selection |
 
 ---
 
-**Última revisão:** alinhado ao estado pós-v1.0.0 (i18n, ícones item-only, listas separadas construir/craft).
+**Last revised:** aligned with post-v1.0.0 state (i18n, item-only icons, separate build/craft lists).
