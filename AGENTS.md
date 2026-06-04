@@ -35,6 +35,7 @@ minecraft-material-calc/
 │   └── src/{types,calculator,stacks,index}.ts
 ├── server/
 │   └── src/{index.js,data-loader.js,localize.js}
+├── desktop/                  # Electron app (Linux AppImage/deb, macOS dmg)
 ├── client/
 │   ├── src/
 │   │   ├── App.tsx           ← main state
@@ -206,11 +207,18 @@ Server merges in `localizeItem`. Do not duplicate names in `items.json` for othe
 cd /home/lost/Projects/minecraft-material-calc
 npm install
 MINECRAFT_JAR=/path/to/client.jar npm run import:vanilla
+npm run clean:import   # remove generated data/vanilla + textures (STACKCRAFT_ROOT respected)
 npm run build -w @minecraft-calc/core   # required before server if core changed
 npm run dev:server              # :3847
 npm run dev:client              # :5173
 npm run build                   # production: core + client; server serves client/dist if NODE_ENV=production
+npm run start                   # NODE_ENV=production single-server mode
+npm run ensure-electron         # download/unpack Electron if postinstall was skipped
+npm run dev:desktop             # Electron shell (Linux/macOS)
+npm run build:desktop           # electron-builder → desktop/release/
 ```
+
+**Desktop / packaged paths:** `STACKCRAFT_ROOT` (writable user data: `data/`, textures), `STACKCRAFT_BUNDLE_ROOT` (read-only: `client/dist`). Server entry for embedding: `server/src/app.js` exports `createApp`, `startServer`, `reloadGameData`, `getServerState`.
 
 ## Mod extension (planned, not implemented end-to-end)
 

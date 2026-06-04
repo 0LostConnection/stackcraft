@@ -1,15 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { MaterialCalculator } from "@minecraft-calc/core";
+import { getAppRoot } from "./paths.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "../..");
-
-const VANILLA_ITEMS = path.join(ROOT, "data", "vanilla", "items.json");
-
-export function loadSourcesManifest() {
-  const manifestPath = path.join(ROOT, "data", "sources.manifest.json");
+export function loadSourcesManifest(root = getAppRoot()) {
+  const manifestPath = path.join(root, "data", "sources.manifest.json");
   if (!fs.existsSync(manifestPath)) {
     return { sources: [] };
   }
@@ -17,12 +12,12 @@ export function loadSourcesManifest() {
 }
 
 /** @param {{ sources: Array<{ id: string, path: string, enabled?: boolean }> }} manifest */
-export function inspectDataFiles(manifest) {
+export function inspectDataFiles(manifest, root = getAppRoot()) {
   const enabled = manifest.sources.filter((s) => s.enabled !== false);
   const missing = [];
 
   for (const source of enabled) {
-    const base = path.join(ROOT, source.path);
+    const base = path.join(root, source.path);
     const required = ["items.json", "recipes.json", "tags.json"];
     for (const file of required) {
       const filePath = path.join(base, file);
@@ -39,9 +34,9 @@ export function inspectDataFiles(manifest) {
   };
 }
 
-export function loadGameData() {
-  const manifest = loadSourcesManifest();
-  const dataStatus = inspectDataFiles(manifest);
+export function loadGameData(root = getAppRoot()) {
+  const manifest = loadSourcesManifest(root);
+  const dataStatus = inspectDataFiles(manifest, root);
   const enabled = manifest.sources.filter((s) => s.enabled !== false);
 
   const items = [];
@@ -51,7 +46,7 @@ export function loadGameData() {
 
   if (dataStatus.ready) {
     for (const source of enabled) {
-      const base = path.join(ROOT, source.path);
+      const base = path.join(root, source.path);
       const mPath = path.join(base, "manifest.json");
       if (fs.existsSync(mPath)) {
         const m = JSON.parse(fs.readFileSync(mPath, "utf8"));
@@ -103,8 +98,8 @@ export function loadGameData() {
   };
 }
 
-export function texturesDirExists() {
-  const dir = path.join(ROOT, "client", "public", "textures", "vanilla", "items");
+export function texturesDirExists(root = getAppRoot()) {
+  const dir = path.join(root, "client", "public", "textures", "vanilla", "items");
   if (!fs.existsSync(dir)) return false;
   try {
     const entries = fs.readdirSync(dir).filter((n) => n !== ".gitkeep");
@@ -114,6 +109,6 @@ export function texturesDirExists() {
   }
 }
 
-export function vanillaDataImported() {
-  return fs.existsSync(VANILLA_ITEMS);
+export function vanillaDataImported(root = getAppRoot()) {
+  return fs.existsSync(path.join(root, "data", "vanilla", "items.json"));
 }

@@ -1,22 +1,45 @@
 {
   "name": "minecraft-material-calc",
   "version": "1.0.0",
-  "private": true,
   "license": "MIT",
+  "author": {
+    "name": "Geovane Saraiva da Silva",
+    "email": "geovane.saraiva.silva@gmail.com"
+  },
+  "description": "Minecraft Material Calculator",
+  "keywords": [
+    "minecraft",
+    "material",
+    "calculator"
+  ],
+  "homepage": "https://github.com/0LostConnection/stackcraft/",
   "workspaces": [
     "packages/core",
     "server",
-    "client"
+    "client",
+    "desktop"
   ],
   "scripts": {
     "import:vanilla": "node scripts/import-minecraft.mjs",
+    "clean:import": "node scripts/clean-import.mjs",
     "dev": "npm run dev -w server & npm run dev -w client",
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",
     "build": "npm run build -w packages/core && npm run build -w server && npm run build -w client",
-    "start": "npm run start -w server"
+    "start": "NODE_ENV=production npm run start -w server",
+    "ensure-electron": "node scripts/ensure-electron.mjs",
+    "dev:desktop": "npm run build && npm run ensure-electron && npm run dev -w desktop",
+    "build:desktop": "npm run build && npm run ensure-electron && npm run dist -w desktop"
+  },
+  "dependencies": {
+    "@minecraft-calc/core": "*",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
   },
   "engines": {
     "node": ">=20"
+  },
+  "allowScripts": {
+    "electron@42.3.3": true
   }
 }

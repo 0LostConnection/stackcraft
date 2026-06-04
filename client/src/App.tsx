@@ -11,7 +11,13 @@ import {
 import { ItemSearch } from "./components/ItemSearch";
 import { ItemIcon } from "./components/ItemIcon";
 import { LanguageSelector } from "./components/LanguageSelector";
+import { DesktopImportProgress } from "./components/DesktopImportProgress";
+import { ImportRequiredBanner } from "./components/ImportRequiredBanner";
 import { ResultsPanel } from "./components/ResultsPanel";
+import {
+  useStackcraftDataReady,
+  useStackcraftDesktop,
+} from "./hooks/useStackcraftDesktop";
 import { useI18n } from "./i18n";
 import "./styles/app.css";
 
@@ -24,6 +30,7 @@ const DEFAULT_BASES: string[] = [
 ];
 
 export default function App() {
+  const { isDesktop } = useStackcraftDesktop();
   const { t, locale, localeTag } = useI18n();
   const [targets, setTargets] = useState<TargetEntry[]>([]);
   const [baseMaterials, setBaseMaterials] = useState<string[]>(DEFAULT_BASES);
@@ -46,11 +53,31 @@ export default function App() {
     setApiLang(localeTag);
   }, [localeTag]);
 
-  useEffect(() => {
+  const refreshHealth = useCallback(() => {
     fetchHealth()
       .then(setHealth)
       .catch(() => setHealth(null));
   }, []);
+
+  useEffect(() => {
+    refreshHealth();
+  }, [refreshHealth]);
+
+  const onDesktopDataReady = useCallback(
+    (health: { dataReady: boolean; version: string; items: number } | null) => {
+      if (health) {
+        setHealth({
+          version: health.version,
+          items: health.items,
+          dataReady: health.dataReady,
+        });
+      }
+      refreshHealth();
+    },
+    [refreshHealth],
+  );
+
+  useStackcraftDataReady(onDesktopDataReady);
 
   const targetsRef = useRef(targets);
   targetsRef.current = targets;
@@ -164,13 +191,21 @@ export default function App() {
         </div>
       </header>
 
-      {health && health.dataReady === false && (
-        <div className="data-banner" role="status">
-          <p className="data-banner-title">{t("dataNotImported")}</p>
-          <p className="data-banner-hint">
-            <code>{health.dataHint ?? t("dataImportCommand")}</code>
-          </p>
-        </div>
+      {isDesktop ? (
+        <>
+          <DesktopImportProgress />
+          <ImportRequiredBanner />
+        </>
+      ) : (
+        health &&
+        health.dataReady === false && (
+          <div className="data-banner" role="status">
+            <p className="data-banner-title">{t("dataNotImported")}</p>
+            <p className="data-banner-hint">
+              <code>{health.dataHint ?? t("dataImportCommand")}</code>
+            </p>
+          </div>
+        )
       )}
 
       <main className="app-grid">

@@ -43,6 +43,27 @@ Generated output (gitignored):
 - `data/vanilla/` — `items.json`, `recipes.json`, `tags.json`, `lang/`
 - `client/public/textures/vanilla/items/` — PNG icons
 
+## Desktop app (Linux / macOS)
+
+StackCraft can run as an Electron desktop app with in-app Minecraft JAR import:
+
+```bash
+npm install
+npm run dev:desktop            # build, ensure Electron binary, launch app
+npm run build:desktop          # production installers in desktop/release/
+```
+
+If Electron fails to start (`Electron failed to install correctly`), run:
+
+```bash
+npm run ensure-electron
+```
+
+- **Import:** File → Import Minecraft JAR… or the banner button when data is missing.
+- **Requires:** `unzip` on your PATH (standard on macOS; install on minimal Linux).
+- **Packaged installs** store imported data under the app user data directory (persists across updates).
+- **Windows** desktop builds are not included yet.
+
 ## Project layout
 
 ```
@@ -52,6 +73,7 @@ client/public/textures/vanilla/items/   # generated PNGs (not in git)
 packages/core/         # calculation logic (@minecraft-calc/core)
 server/                # Express API
 client/                # React UI
+desktop/               # Electron shell (Linux AppImage/deb, macOS dmg)
 scripts/import-minecraft.mjs
 ```
 

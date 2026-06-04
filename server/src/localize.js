@@ -1,9 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "../..");
+import { getAppRoot } from "./paths.js";
 
 const SUPPORTED = new Set(["en_us", "pt_br", "es_es"]);
 
@@ -25,11 +22,11 @@ function parseLangJson(json) {
   return map;
 }
 
-export function loadLangMaps() {
+export function loadLangMaps(root = getAppRoot()) {
   if (langMaps !== null) return langMaps;
 
   langMaps = {};
-  const langDir = path.join(ROOT, "data", "vanilla", "lang");
+  const langDir = path.join(root, "data", "vanilla", "lang");
   if (!fs.existsSync(langDir)) {
     return langMaps;
   }
@@ -58,9 +55,9 @@ export function resolveLang(req) {
   return "en_us";
 }
 
-export function reloadLangMaps() {
+export function reloadLangMaps(root = getAppRoot()) {
   langMaps = null;
-  return loadLangMaps();
+  return loadLangMaps(root);
 }
 
 export function localizeItem(item, langCode) {
