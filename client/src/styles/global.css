@@ -1,0 +1,181 @@
+:root {
+  --bg-deep: #0d1210;
+  --bg-panel: #1a221c;
+  --bg-panel-hover: #243028;
+  --bg-slot: #2d3b32;
+  --border: #3d5244;
+  --border-light: #5a7a62;
+  --accent: #5cdb4f;
+  --accent-dim: #3d9a35;
+  --gold: #ffdd55;
+  --text: #e8f0e8;
+  --text-muted: #9bb09a;
+  --danger: #ff6b6b;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --radius: 10px;
+  --font-ui: "Source Sans 3", system-ui, sans-serif;
+  --font-pixel: "Silkscreen", monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, #1f3d22 0%, transparent 55%),
+    linear-gradient(180deg, #0d1210 0%, #121a14 100%);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.panel-title {
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+.slot {
+  width: 48px;
+  height: 48px;
+  background: var(--bg-slot);
+  border: 2px solid #1a1510;
+  border-top-color: #4a4035;
+  border-left-color: #4a4035;
+  border-bottom-color: #0a0806;
+  border-right-color: #0a0806;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.slot img {
+  width: 32px;
+  height: 32px;
+}
+
+.slot-no-icon {
+  opacity: 0.85;
+}
+
+.slot img.icon-missing {
+  opacity: 0.7;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 2px solid var(--border-light);
+  background: linear-gradient(180deg, var(--bg-panel-hover) 0%, var(--bg-panel) 100%);
+  color: var(--text);
+  font-weight: 600;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+}
+
+.btn:hover {
+  border-color: var(--accent);
+  background: var(--bg-panel-hover);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  border-color: var(--accent-dim);
+  background: linear-gradient(180deg, #4a9e3f 0%, var(--accent-dim) 100%);
+  color: #0d1210;
+}
+
+.btn-primary:hover {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dim) 100%);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--danger);
+  border-color: transparent;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: var(--bg-deep);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+  background: var(--bg-slot);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.chip .slot {
+  width: 28px;
+  height: 28px;
+}
+
+.chip .slot img {
+  width: 20px;
+  height: 20px;
+}

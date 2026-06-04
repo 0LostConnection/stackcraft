@@ -1,0 +1,15 @@
+{
+  "version": "26.1.2",
+  "source": "vanilla",
+  "jar": "/home/lost/.local/share/PrismLauncher/libraries/com/mojang/minecraft/26.1.2/minecraft-26.1.2-client.jar",
+  "importedAt": "2026-06-04T01:25:30.815Z",
+  "iconPolicy": "item-only",
+  "counts": {
+    "items": 2604,
+    "itemsWithIcon": 1164,
+    "itemsMissingIcon": 1440,
+    "recipes": 1421,
+    "tags": 185,
+    "texturesCopied": 1165
+  }
+}

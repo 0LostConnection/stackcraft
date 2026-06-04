@@ -1,0 +1,11 @@
+{
+  "sources": [
+    {
+      "id": "vanilla",
+      "label": "Minecraft (vanilla)",
+      "path": "data/vanilla",
+      "textures": "client/public/textures/vanilla/items",
+      "enabled": true
+    }
+  ]
+}
