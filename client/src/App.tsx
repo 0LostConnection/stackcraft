@@ -34,9 +34,12 @@ export default function App() {
   });
   const [result, setResult] = useState<CalculateResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [health, setHealth] = useState<{ version: string; items: number } | null>(
-    null,
-  );
+  const [health, setHealth] = useState<{
+    version: string;
+    items: number;
+    dataReady?: boolean;
+    dataHint?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -160,6 +163,15 @@ export default function App() {
           )}
         </div>
       </header>
+
+      {health && health.dataReady === false && (
+        <div className="data-banner" role="status">
+          <p className="data-banner-title">{t("dataNotImported")}</p>
+          <p className="data-banner-hint">
+            <code>{health.dataHint ?? t("dataImportCommand")}</code>
+          </p>
+        </div>
+      )}
 
       <main className="app-grid">
         <div className="col-left">

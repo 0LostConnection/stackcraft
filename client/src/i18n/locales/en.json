@@ -45,6 +45,8 @@
   "noIconTooltip": "{name} (no 2D icon — 3D model in-game)",
   "searching": "Searching…",
   "searchEmpty": "No items found",
-  "footer": "Minecraft 26.1.2 data · modular for future mods ·",
+  "dataNotImported": "Game data not found — import from your Minecraft client JAR first.",
+  "dataImportCommand": "MINECRAFT_JAR=/path/to/minecraft-client.jar npm run import:vanilla",
+  "footer": "Minecraft data is generated locally · modular for future mods ·",
   "language": "Language"
 }

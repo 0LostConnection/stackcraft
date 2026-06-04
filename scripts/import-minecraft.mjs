@@ -12,10 +12,17 @@ import { execSync } from "node:child_process";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 
-const DEFAULT_JAR =
-  "/home/lost/.local/share/PrismLauncher/libraries/com/mojang/minecraft/26.1.2/minecraft-26.1.2-client.jar";
+const jarEnv = process.env.MINECRAFT_JAR?.trim();
+if (!jarEnv) {
+  console.error("MINECRAFT_JAR is required (path to the Minecraft client .jar).");
+  console.error("Example:");
+  console.error(
+    "  MINECRAFT_JAR=/path/to/minecraft-client.jar npm run import:vanilla",
+  );
+  process.exit(1);
+}
 
-const JAR = process.env.MINECRAFT_JAR || DEFAULT_JAR;
+const JAR = path.resolve(jarEnv);
 const OUT_DATA = path.join(ROOT, "data", "vanilla");
 const OUT_TEXTURES = path.join(ROOT, "client", "public", "textures", "vanilla", "items");
 const MISSING_TEXTURE_JAR = "assets/minecraft/textures/misc/unknown_pack.png";
@@ -235,7 +242,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Importing from ${JAR}`);
+  console.log(`Importing from ${path.basename(JAR)}`);
 
   fs.mkdirSync(OUT_DATA, { recursive: true });
   fs.rmSync(OUT_TEXTURES, { recursive: true, force: true });
@@ -336,7 +343,7 @@ async function main() {
   const manifest = {
     version: "26.1.2",
     source: "vanilla",
-    jar: JAR,
+    jar: path.basename(JAR),
     importedAt: new Date().toISOString(),
     iconPolicy: "item-only",
     counts: {

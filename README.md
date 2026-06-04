@@ -11,7 +11,7 @@ Interactive web app (React + Node) that calculates how many base materials you n
 
 - **Unified item catalog** (items + blocks) with one inventory icon per entry
 - Icons from `textures/item` or item models only; block parts (door top/bottom) are not separate items
-- Items that are 3D-only in-game use a placeholder (`unknown_pack`)
+- Items that are 3D-only in-game use an in-app placeholder (no shipped textures)
 - **Stack legend**: `3 stacks + 12` = 3×64 + 12 units
 - **Configurable base materials** (e.g. stop at planks if you already have them, not logs)
 - **Tag preferences** (wood type, etc.)
@@ -21,36 +21,37 @@ Interactive web app (React + Node) that calculates how many base materials you n
 ## Requirements
 
 - Node.js 20+
-- Minecraft client JAR (default: PrismLauncher `minecraft-26.1.2-client.jar`)
+- A **Minecraft client JAR** on your machine (from the official launcher, PrismLauncher, etc.)
 
 ## Quick start
 
+This repo does **not** include extracted Minecraft data or textures. You must import them locally:
+
 ```bash
-git clone https://github.com/0LostConnection/stackcraft.git
-cd stackcraft
 npm install
-npm run import:vanilla   # extract items, recipes, textures (~1 min)
+MINECRAFT_JAR=/path/to/minecraft-client.jar npm run import:vanilla
 npm run build -w @minecraft-calc/core
 npm run dev:server       # terminal 1 — http://localhost:3847
 npm run dev:client       # terminal 2 — http://localhost:5173
 ```
 
-Or point at another JAR:
+`MINECRAFT_JAR` is **required** for import (there is no default path).
 
-```bash
-MINECRAFT_JAR=/path/to/minecraft-client.jar npm run import:vanilla
-```
+Generated output (gitignored):
+
+- `data/vanilla/` — `items.json`, `recipes.json`, `tags.json`, `lang/`
+- `client/public/textures/vanilla/items/` — PNG icons
 
 ## Project layout
 
 ```
-data/vanilla/          # items.json, recipes.json, tags.json (generated)
-client/public/textures/vanilla/items/
+data/vanilla/          # generated JSON + lang (not in git)
+data/sources.manifest.json
+client/public/textures/vanilla/items/   # generated PNGs (not in git)
 packages/core/         # calculation logic (@minecraft-calc/core)
 server/                # Express API
 client/                # React UI
 scripts/import-minecraft.mjs
-data/sources.manifest.json   # data sources (vanilla + mods)
 ```
 
 ## Adding mods (future)
@@ -61,9 +62,12 @@ data/sources.manifest.json   # data sources (vanilla + mods)
 
 ## API
 
-- `GET /api/items?q=oak&lang=en` — search items
+- `GET /api/health` — includes `dataReady` and import hint when data is missing
+- `GET /api/items?q=oak&lang=en` — search items (503 until import)
 - `POST /api/calculate` — `{ targets, baseMaterials, tagChoices }`
 
 ## License
 
-Minecraft assets (textures, recipes, names) belong to Mojang/Microsoft. This tool is unofficial fan software.
+StackCraft source code is licensed under the [MIT License](./LICENSE) (Copyright © 2026 Geovane Saraiva da Silva).
+
+Minecraft assets (textures, recipes, names) belong to Mojang/Microsoft. This tool is unofficial fan software. Do not redistribute imported game files.

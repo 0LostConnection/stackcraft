@@ -45,6 +45,8 @@
   "noIconTooltip": "{name} (sin icono 2D — modelo 3D en el juego)",
   "searching": "Buscando…",
   "searchEmpty": "Ningún objeto encontrado",
-  "footer": "Datos de Minecraft 26.1.2 · modular para mods futuros ·",
+  "dataNotImported": "No hay datos del juego — importa desde el JAR del cliente de Minecraft primero.",
+  "dataImportCommand": "MINECRAFT_JAR=/ruta/minecraft-client.jar npm run import:vanilla",
+  "footer": "Datos de Minecraft generados localmente · modular para mods futuros ·",
   "language": "Idioma"
 }

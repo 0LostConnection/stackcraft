@@ -2,7 +2,11 @@ import cors from "cors";
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadGameData, loadSourcesManifest } from "./data-loader.js";
+import {
+  loadGameData,
+  loadSourcesManifest,
+  texturesDirExists,
+} from "./data-loader.js";
 import {
   getSupportedLocales,
   localizeItem,
@@ -14,16 +18,31 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
 const PORT = Number(process.env.PORT) || 3847;
 
-const { gameData, calculator, itemsById } = loadGameData();
+const { gameData, calculator, itemsById, dataStatus } = loadGameData();
 loadLangMaps();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+function requireData(_req, res, next) {
+  if (dataStatus.ready) {
+    next();
+    return;
+  }
+  res.status(503).json({
+    error: "Game data not imported",
+    hint: dataStatus.importCommand,
+    missing: dataStatus.missing,
+  });
+}
+
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
+    dataReady: dataStatus.ready,
+    dataHint: dataStatus.ready ? undefined : dataStatus.importCommand,
+    texturesPresent: texturesDirExists(),
     version: gameData.version,
     items: gameData.items.length,
     recipes: gameData.recipes.length,
@@ -39,7 +58,7 @@ app.get("/api/sources", (_req, res) => {
   res.json(loadSourcesManifest());
 });
 
-app.get("/api/items", (req, res) => {
+app.get("/api/items", requireData, (req, res) => {
   const q = String(req.query.q ?? "")
     .toLowerCase()
     .trim();
@@ -59,11 +78,11 @@ app.get("/api/items", (req, res) => {
   );
 });
 
-app.get("/api/items/:id", (req, res) => {
+app.get("/api/items/:id", requireData, (req, res) => {
   const id = decodeURIComponent(req.params.id);
   const item = itemsById.get(id);
   if (!item) {
-    res.status(404).json({ error: "Item não encontrado" });
+    res.status(404).json({ error: "Item not found" });
     return;
   }
   const lang = resolveLang(req);
@@ -71,7 +90,7 @@ app.get("/api/items/:id", (req, res) => {
   res.json({ item: localizeItem(item, lang), recipes });
 });
 
-app.get("/api/tags/:id", (req, res) => {
+app.get("/api/tags/:id", requireData, (req, res) => {
   const tagId = decodeURIComponent(req.params.id);
   const values = calculator.getTagValues(tagId);
   const lang = resolveLang(req);
@@ -82,11 +101,11 @@ app.get("/api/tags/:id", (req, res) => {
   res.json({ id: tagId, values, items });
 });
 
-app.get("/api/tags", (_req, res) => {
+app.get("/api/tags", requireData, (_req, res) => {
   res.json(gameData.tags);
 });
 
-app.post("/api/calculate", (req, res) => {
+app.post("/api/calculate", requireData, (req, res) => {
   const {
     targets = [],
     baseMaterials = [],
@@ -95,7 +114,7 @@ app.post("/api/calculate", (req, res) => {
   } = req.body ?? {};
 
   if (!Array.isArray(targets) || targets.length === 0) {
-    res.status(400).json({ error: "Informe ao menos um item desejado" });
+    res.status(400).json({ error: "At least one target item is required" });
     return;
   }
 
@@ -147,7 +166,8 @@ if (process.env.NODE_ENV === "production") {
 }
 
 app.listen(PORT, () => {
-  console.log(
-    `Minecraft Material Calc — http://localhost:${PORT} (${gameData.items.length} itens)`,
-  );
+  const status = dataStatus.ready
+    ? `${gameData.items.length} items`
+    : "no game data — run import:vanilla";
+  console.log(`StackCraft — http://localhost:${PORT} (${status})`);
 });

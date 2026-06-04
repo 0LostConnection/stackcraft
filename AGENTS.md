@@ -73,8 +73,7 @@ flowchart LR
 
 ## Pipeline de dados (`npm run import:vanilla`)
 
-**Entrada:** `MINECRAFT_JAR` ou padrão PrismLauncher:
-`/home/lost/.local/share/PrismLauncher/libraries/com/mojang/minecraft/26.1.2/minecraft-26.1.2-client.jar`
+**Entrada:** variável de ambiente **`MINECRAFT_JAR`** (obrigatória, sem caminho padrão no script).
 
 **O que o import faz:**
 
@@ -83,7 +82,7 @@ flowchart LR
 3. **Tags** — `data/minecraft/tags/item/*.json`; valores filtrados ao registro.
 4. **Ícones (`iconPolicy: item-only`)** — uma PNG por item em `client/public/textures/vanilla/items/<slug>.png`:
    - Prioridade: `textures/item/<slug>.png` → modelos `assets/minecraft/models/item|block/<slug>.json` (layer0, etc.) → bloco único `textures/block/<slug>.png` se não for parte multipart (`_top`, `_bottom`, …).
-   - Sem ícone: `hasTexture: false`, UI usa `_missing.png` (extraído de `unknown_pack` do JAR).
+   - Sem ícone: `hasTexture: false`; UI usa placeholder SVG (não versionar `_missing.png`).
 5. **Traduções de nomes** — `data/vanilla/lang/en_us.json` do JAR; `pt_br` e `es_es` baixados de [minecraft-assets 1.21.4](https://github.com/InventivetalentDev/minecraft-assets) (mapa `minecraft:<id>` → nome).
 
 **Saída:** atualiza `data/sources.manifest.json` com entrada `vanilla`.
@@ -172,7 +171,7 @@ Base: `http://localhost:3847`
 | `ItemSearch` | Autocomplete itens |
 | `ResultsPanel` | Duas seções + legenda HTML via `t("legend")` |
 | `MaterialListSection` | Lista com `useStackFormat()` |
-| `ItemIcon` | Textura ou `_missing.png` |
+| `ItemIcon` | Textura local ou placeholder SVG |
 
 ## Internacionalização
 
@@ -189,7 +188,7 @@ Servidor mescla em `localizeItem`. Não duplicar nomes em `items.json` para outr
 ```bash
 cd /home/lost/Projects/minecraft-material-calc
 npm install
-npm run import:vanilla          # após mudar JAR ou política de ícones
+MINECRAFT_JAR=/path/to/client.jar npm run import:vanilla
 npm run build -w @minecraft-calc/core   # obrigatório antes do server se core mudou
 npm run dev:server              # :3847
 npm run dev:client              # :5173
@@ -220,12 +219,8 @@ Generalizar `scripts/import-minecraft.mjs` ou criar `import-jar.mjs` parametriza
 3. **Novos campos em itens/receitas** — atualizar `types.ts`, import script, `data-loader`, API enrichment e tipos em `client/src/api.ts`.
 4. **UI** — manter tema Minecraft (variáveis CSS em `global.css` / `app.css`); texturas `image-rendering: pixelated`.
 5. **Textos visíveis** — adicionar chaves nos três JSON de `i18n/locales/`; inglês default.
-6. **Não commitar** `node_modules/`, `.env`; dados gerados (`data/vanilla`, texturas) já estão no repo v1.0.0.
+6. **Não commitar** `node_modules/`, `.env`, nem assets extraídos do Minecraft (`data/vanilla/*.json`, `lang/`, `client/public/textures/vanilla/items/*`). Pastas vazias usam `.gitkeep`. Servidor: `inspectDataFiles` + `dataReady` em `/api/health`; rotas de jogo retornam 503 sem import.
 7. **Testar manualmente:** 30 `oak_fence` + base `oak_log` + tag planks → **13 oak_log**; remover targets → craft some; trocar idioma → nomes da API mudam.
-
-## Instância do usuário (referência)
-
-PrismLauncher: `Intermediate Version` — NeoForge **26.1.2.71**, MC **26.1.2**. JAR vanilla usado no import coincide com essa versão.
 
 ## Histórico relevante de decisões
 
@@ -234,6 +229,8 @@ PrismLauncher: `Intermediate Version` — NeoForge **26.1.2.71**, MC **26.1.2**.
 | Catálogo só item+block do lang | Evitar `oak_door_top` como item separado |
 | Pasta única `vanilla/items/` | Um ícone por entrada de inventário |
 | `en` default na UI | Pedido do usuário; MC JAR só traz `en_us` nativo |
+| Sem assets MC no git | Licença + repo público; import local obrigatório |
+| `MINECRAFT_JAR` sem default | Evitar caminhos hardcoded por máquina |
 | Invalidar `result` ao mudar lista | Bug: craft permanecia após remover itens |
 | LanguageSelector sem overlay hitarea | Overlay impedia reabrir após seleção |
 
