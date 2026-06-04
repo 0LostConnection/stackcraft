@@ -13,6 +13,7 @@ Interactive web app (React + Node) that calculates how many base materials you n
 - Icons from `textures/item` or item models only; block parts (door top/bottom) are not separate items
 - Items that are 3D-only in-game use an in-app placeholder (no shipped textures)
 - **Stack legend**: `3 stacks + 12` = 3×64 + 12 units
+- **Recipe tree** for craft materials — expandable breakdown from each build item down to base ingredients
 - **Configurable base materials** (e.g. stop at planks if you already have them, not logs)
 - **Tag preferences** (wood type, etc.)
 - **UI languages**: English (default), Portuguese, Spanish

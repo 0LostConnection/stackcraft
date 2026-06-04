@@ -6,6 +6,7 @@ import type {
   GameData,
   ItemId,
   MaterialLine,
+  MaterialNode,
   RecipeDef,
   RecipeIngredient,
 } from "./types.js";
@@ -69,10 +70,73 @@ export class MaterialCalculator {
       }))
       .sort((a, b) => b.count - a.count);
 
+    const tree: MaterialNode[] = [];
+    for (const target of targets) {
+      if (target.count <= 0) continue;
+      tree.push(
+        this.expandTree(
+          target.id,
+          target.count,
+          bases,
+          options,
+          new Set(),
+          unresolved,
+        ),
+      );
+    }
+
     return {
       materials,
+      tree,
       unresolved: [...unresolved],
     };
+  }
+
+  private expandTree(
+    itemId: ItemId,
+    count: number,
+    bases: Set<ItemId>,
+    options: CalculateOptions,
+    visiting: Set<ItemId>,
+    unresolved: Set<ItemId>,
+  ): MaterialNode {
+    const resolvedId = this.resolveItem(itemId, options);
+    const stacks = breakdownStacks(count);
+
+    if (bases.has(resolvedId)) {
+      return { id: resolvedId, count, stacks, isBase: true };
+    }
+
+    if (visiting.has(resolvedId)) {
+      return { id: resolvedId, count, stacks, isLeaf: true };
+    }
+
+    const recipes = this.recipesByResult.get(resolvedId);
+    if (!recipes?.length) {
+      if (!this.itemIds.has(resolvedId)) {
+        unresolved.add(resolvedId);
+      }
+      return { id: resolvedId, count, stacks, isLeaf: true };
+    }
+
+    const recipe = this.pickRecipe(resolvedId, recipes, options);
+    const batches = Math.ceil(count / recipe.resultCount);
+    visiting.add(resolvedId);
+
+    const children = recipe.ingredients.map((ing) => {
+      const ingId = this.resolveItem(ing.id, options);
+      return this.expandTree(
+        ingId,
+        ing.count * batches,
+        bases,
+        options,
+        visiting,
+        unresolved,
+      );
+    });
+
+    visiting.delete(resolvedId);
+    return { id: resolvedId, count, stacks, children };
   }
 
   private expand(

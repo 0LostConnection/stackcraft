@@ -41,6 +41,8 @@
   "stacksMany": "stacks",
   "stackDetail": "({stacks}×64 + {remainder})",
   "stackDetailFull": "({stacks}×64)",
+  "treeExpand": "Expand recipe breakdown",
+  "treeCollapse": "Collapse recipe breakdown",
   "unresolved": "Some items have no recipe in the database: {list}",
   "noIconTooltip": "{name} (no 2D icon — 3D model in-game)",
   "searching": "Searching…",

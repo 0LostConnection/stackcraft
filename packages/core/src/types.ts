@@ -67,7 +67,21 @@ export interface MaterialLine {
   stacks: StackBreakdown;
 }
 
+/** One node in the recipe expansion tree (targets at root, ingredients nested). */
+export interface MaterialNode {
+  id: ItemId;
+  count: number;
+  stacks: StackBreakdown;
+  /** Stopped at a configured base material */
+  isBase?: boolean;
+  /** No recipe (or cycle) — count is final */
+  isLeaf?: boolean;
+  children?: MaterialNode[];
+}
+
 export interface CalculateResult {
   materials: MaterialLine[];
+  /** Per-target expansion trees down to base materials */
+  tree: MaterialNode[];
   unresolved: ItemId[];
 }

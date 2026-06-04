@@ -41,6 +41,8 @@
   "stacksMany": "paquetes",
   "stackDetail": "({stacks}×64 + {remainder})",
   "stackDetailFull": "({stacks}×64)",
+  "treeExpand": "Expandir desglose de receta",
+  "treeCollapse": "Contraer desglose de receta",
   "unresolved": "Algunos objetos no tienen receta en la base de datos: {list}",
   "noIconTooltip": "{name} (sin icono 2D — modelo 3D en el juego)",
   "searching": "Buscando…",
