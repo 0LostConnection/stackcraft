@@ -1,4 +1,5 @@
-import type { CalculateResult, ItemDef, TargetEntry } from "../api";
+import type { CalculateResult, TargetEntry } from "../api";
+import { useI18n } from "../i18n";
 import { MaterialListSection, type DisplayLine } from "./MaterialListSection";
 
 interface Props {
@@ -14,76 +15,76 @@ function targetToLine(t: TargetEntry): DisplayLine {
     count: t.count,
     item:
       t.item ??
-      ({
+      {
         id: t.id,
         name: slug.replace(/_/g, " "),
         texture: `vanilla/items/${slug}.png`,
         hasTexture: true,
         source: "unknown",
-      } satisfies ItemDef),
+      },
   };
 }
 
 export function ResultsPanel({ targets, result, loading }: Props) {
+  const { t } = useI18n();
   const targetLines = targets.map(targetToLine);
   const hasTargets = targetLines.length > 0;
+  const craftResult = hasTargets ? result : null;
 
   return (
     <section className="panel results-panel">
-      <h2 className="panel-title">Resumo de materiais</h2>
+      <h2 className="panel-title">{t("resultsTitle")}</h2>
 
-      <div className="legend panel-inset">
-        <strong>Legenda:</strong> um <em>pacote</em> = 64 unidades (pilha do inventário).
-        Ex.: <code>2 pacotes + 5</code> = 133 unidades.
-      </div>
+      <div
+        className="legend panel-inset"
+        dangerouslySetInnerHTML={{ __html: t("legend") }}
+      />
 
       {hasTargets && (
         <MaterialListSection
-          title="Lista para construir"
-          subtitle="Itens que você pediu — quanto levar ou craftar direto"
+          title={t("buildListTitle")}
+          subtitle={t("buildListSub")}
           lines={targetLines}
         />
       )}
 
       {!hasTargets && !loading && (
-        <p className="muted empty-hint">
-          Adicione itens à lista e clique em Calcular para ver os materiais de craft.
-        </p>
+        <p className="muted empty-hint">{t("emptyResults")}</p>
       )}
 
       {hasTargets && <div className="results-divider" aria-hidden />}
 
-      {hasTargets && !loading && !result && (
-        <p className="muted results-craft-status">
-          Clique em <strong>Calcular materiais</strong> para ver os ingredientes de craft.
-        </p>
+      {hasTargets && !loading && !craftResult && (
+        <p
+          className="muted results-craft-status"
+          dangerouslySetInnerHTML={{ __html: t("craftPrompt") }}
+        />
       )}
 
       {loading && (
-        <p className="muted results-craft-status">Calculando materiais de craft…</p>
+        <p className="muted results-craft-status">{t("craftCalculating")}</p>
       )}
 
-      {!loading && result && result.materials.length > 0 && (
+      {!loading && craftResult && craftResult.materials.length > 0 && (
         <MaterialListSection
-          title="Materiais para craftar"
-          subtitle="Ingredientes base depois de expandir receitas (troncos, pedra, etc.)"
-          lines={result.materials}
+          title={t("craftListTitle")}
+          subtitle={t("craftListSub")}
+          lines={craftResult.materials}
         />
       )}
 
-      {!loading && hasTargets && result && result.materials.length === 0 && (
+      {!loading && hasTargets && craftResult && craftResult.materials.length === 0 && (
         <MaterialListSection
-          title="Materiais para craftar"
-          subtitle="Ingredientes base depois de expandir receitas"
+          title={t("craftListTitle")}
+          subtitle={t("craftListSub")}
           lines={[]}
-          emptyMessage="Nenhum material base — talvez tudo já esteja na lista de materiais base."
+          emptyMessage={t("craftEmpty")}
         />
       )}
 
-      {result?.unresolved && result.unresolved.length > 0 && (
+      {craftResult?.unresolved && craftResult.unresolved.length > 0 && (
         <p className="warning">
-          Alguns itens não têm receita no banco de dados:{" "}
-          {result.unresolved.join(", ")}
+          {t("unresolved", { list: craftResult.unresolved.join(", ") })}
         </p>
       )}
     </section>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { searchItems, type ItemDef } from "../api";
+import { useI18n } from "../i18n";
 import { ItemIcon } from "./ItemIcon";
 
 interface Props {
@@ -8,29 +9,33 @@ interface Props {
 }
 
 export function ItemSearch({ onSelect, placeholder }: Props) {
+  const { t, localeTag } = useI18n();
   const [q, setQ] = useState("");
   const [results, setResults] = useState<ItemDef[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  const search = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setResults([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const items = await searchItems(query);
-      setResults(items);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const search = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setResults([]);
+        return;
+      }
+      setLoading(true);
+      try {
+        const items = await searchItems(query);
+        setResults(items);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [localeTag],
+  );
 
   useEffect(() => {
-    const t = setTimeout(() => search(q), 200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => search(q), 200);
+    return () => clearTimeout(timer);
   }, [q, search]);
 
   useEffect(() => {
@@ -48,19 +53,25 @@ export function ItemSearch({ onSelect, placeholder }: Props) {
       <input
         className="input"
         type="search"
-        placeholder={placeholder ?? "Buscar item do Minecraft…"}
+        role="combobox"
+        aria-expanded={open && !!q.trim()}
+        aria-autocomplete="list"
+        placeholder={placeholder ?? t("searchPlaceholder")}
         value={q}
         onChange={(e) => {
           setQ(e.target.value);
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+        }}
       />
       {open && (q.trim() || results.length > 0) && (
-        <ul className="item-search-dropdown panel">
-          {loading && <li className="muted">Buscando…</li>}
+        <ul className="item-search-dropdown panel" role="listbox">
+          {loading && <li className="muted">{t("searching")}</li>}
           {!loading && results.length === 0 && q.trim() && (
-            <li className="muted">Nenhum item encontrado</li>
+            <li className="muted">{t("searchEmpty")}</li>
           )}
           {results.map((item) => (
             <li key={item.id}>

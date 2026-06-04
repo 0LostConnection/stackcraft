@@ -1,58 +1,69 @@
-# StackCraft — Calculadora de Materiais Minecraft
+# StackCraft — Minecraft Material Calculator
 
-App interativo (React + Node) que calcula quantos materiais base você precisa para uma construção, expandindo receitas de crafting, fornalha e stonecutter.
+Interactive web app (React + Node) that calculates how many base materials you need for a build by expanding crafting, furnace, and stonecutter recipes.
 
-## Recursos
+> [!IMPORTANT]
+> This project was developed with assistance from [Cursor](https://cursor.com) (AI-assisted coding in the IDE).
 
-- **Catálogo unificado de itens** (itens + blocos do jogo) com ícone de inventário por entrada
-- Ícones só de `textures/item` ou modelos de item; partes de bloco (porta cima/baixo) não viram itens separados
-- Itens só 3D no jogo usam placeholder (`unknown_pack`)
-- **Legenda em pacotes**: `3 pacotes + 12` = 3×64 + 12 unidades
-- **Materiais base** configuráveis (para quando você já tem tábuas, não troncos)
-- **Preferências de tags** (tipo de madeira, etc.)
-- **Arquitetura modular** para mods futuros
+**Technical documentation for AI agents:** see [AGENTS.md](./AGENTS.md).
 
-## Requisitos
+## Features
+
+- **Unified item catalog** (items + blocks) with one inventory icon per entry
+- Icons from `textures/item` or item models only; block parts (door top/bottom) are not separate items
+- Items that are 3D-only in-game use a placeholder (`unknown_pack`)
+- **Stack legend**: `3 stacks + 12` = 3×64 + 12 units
+- **Configurable base materials** (e.g. stop at planks if you already have them, not logs)
+- **Tag preferences** (wood type, etc.)
+- **UI languages**: English (default), Portuguese, Spanish
+- **Modular architecture** for future mods
+
+## Requirements
 
 - Node.js 20+
-- JAR do Minecraft (padrão: PrismLauncher `minecraft-26.1.2-client.jar`)
+- Minecraft client JAR (default: PrismLauncher `minecraft-26.1.2-client.jar`)
 
-## Uso rápido
+## Quick start
 
 ```bash
-cd /home/lost/Projects/minecraft-material-calc
+git clone https://github.com/0LostConnection/stackcraft.git
+cd stackcraft
 npm install
-npm run import:vanilla   # extrai itens, receitas, texturas (~1 min)
+npm run import:vanilla   # extract items, recipes, textures (~1 min)
 npm run build -w @minecraft-calc/core
 npm run dev:server       # terminal 1 — http://localhost:3847
 npm run dev:client       # terminal 2 — http://localhost:5173
 ```
 
-Ou use outro JAR:
+Or point at another JAR:
 
 ```bash
-MINECRAFT_JAR=/caminho/para/minecraft-client.jar npm run import:vanilla
+MINECRAFT_JAR=/path/to/minecraft-client.jar npm run import:vanilla
 ```
 
-## Estrutura
+## Project layout
 
 ```
-data/vanilla/          # items.json, recipes.json, tags.json (gerado)
+data/vanilla/          # items.json, recipes.json, tags.json (generated)
 client/public/textures/vanilla/items/
-packages/core/         # lógica de cálculo (@minecraft-calc/core)
-server/                # API Express
-client/                # UI React
+packages/core/         # calculation logic (@minecraft-calc/core)
+server/                # Express API
+client/                # React UI
 scripts/import-minecraft.mjs
-data/sources.manifest.json   # lista de fontes (vanilla + mods)
+data/sources.manifest.json   # data sources (vanilla + mods)
 ```
 
-## Adicionar mods (futuro)
+## Adding mods (future)
 
-1. Copie/adicione um script `import-jar.mjs` apontando para o JAR do mod
-2. Gere `data/mods/<modid>/items.json` etc.
-3. Registre em `data/sources.manifest.json` com `"enabled": true`
+1. Add or adapt an `import-jar.mjs` script for the mod JAR
+2. Generate `data/mods/<modid>/items.json`, etc.
+3. Register the source in `data/sources.manifest.json` with `"enabled": true`
 
 ## API
 
-- `GET /api/items?q=oak` — busca itens
+- `GET /api/items?q=oak&lang=en` — search items
 - `POST /api/calculate` — `{ targets, baseMaterials, tagChoices }`
+
+## License
+
+Minecraft assets (textures, recipes, names) belong to Mojang/Microsoft. This tool is unofficial fan software.

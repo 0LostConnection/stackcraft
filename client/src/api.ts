@@ -1,16 +1,14 @@
+import type { StackBreakdown } from "./stacks-format";
+
+export type { StackBreakdown };
+export { breakdownStacks, formatStacks } from "./stacks-format";
+
 export interface ItemDef {
   id: string;
   name: string;
   texture: string;
   hasTexture?: boolean;
   source: string;
-}
-
-export interface StackBreakdown {
-  total: number;
-  stacks: number;
-  remainder: number;
-  stackSize: number;
 }
 
 export interface MaterialLine {
@@ -33,9 +31,22 @@ export interface TargetEntry {
 
 const API = "";
 
+let apiLang = "en_us";
+
+export function setApiLang(lang: string) {
+  apiLang = lang;
+}
+
+function withLang(url: string): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}lang=${encodeURIComponent(apiLang)}`;
+}
+
 export async function searchItems(q: string): Promise<ItemDef[]> {
-  const res = await fetch(`${API}/api/items?q=${encodeURIComponent(q)}&limit=50`);
-  if (!res.ok) throw new Error("Falha ao buscar itens");
+  const res = await fetch(
+    withLang(`${API}/api/items?q=${encodeURIComponent(q)}&limit=50`),
+  );
+  if (!res.ok) throw new Error("Failed to fetch items");
   return res.json();
 }
 
@@ -44,16 +55,23 @@ export async function calculate(body: {
   baseMaterials: string[];
   tagChoices: Record<string, string>;
 }): Promise<CalculateResult> {
-  const res = await fetch(`${API}/api/calculate`, {
+  const res = await fetch(withLang(`${API}/api/calculate`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? "Falha no cálculo");
+    throw new Error((err as { error?: string }).error ?? "Calculation failed");
   }
   return res.json();
+}
+
+export async function fetchItem(id: string): Promise<ItemDef | null> {
+  const res = await fetch(withLang(`${API}/api/items/${encodeURIComponent(id)}`));
+  if (!res.ok) return null;
+  const data = (await res.json()) as { item: ItemDef };
+  return data.item;
 }
 
 export async function fetchHealth(): Promise<{
@@ -67,26 +85,4 @@ export async function fetchHealth(): Promise<{
 
 export function textureUrl(texture: string): string {
   return `/textures/${texture}`;
-}
-
-export const DEFAULT_STACK_SIZE = 64;
-
-export function breakdownStacks(
-  total: number,
-  stackSize = DEFAULT_STACK_SIZE,
-): StackBreakdown {
-  const safe = Math.max(0, Math.ceil(total));
-  const stacks = Math.floor(safe / stackSize);
-  const remainder = safe % stackSize;
-  return { total: safe, stacks, remainder, stackSize };
-}
-
-export function formatStacks(stacks: StackBreakdown): string {
-  const { stacks: s, remainder, total, stackSize } = stacks;
-  if (total === 0) return "0";
-  if (remainder === 0 && s > 0) {
-    return `${s} ${s === 1 ? "pacote" : "pacotes"} (${stackSize})`;
-  }
-  if (s === 0) return `${remainder} un.`;
-  return `${s} ${s === 1 ? "pacote" : "pacotes"} + ${remainder}`;
 }

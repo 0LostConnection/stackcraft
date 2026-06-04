@@ -3,12 +3,19 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadGameData, loadSourcesManifest } from "./data-loader.js";
+import {
+  getSupportedLocales,
+  localizeItem,
+  loadLangMaps,
+  resolveLang,
+} from "./localize.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "../..");
 const PORT = Number(process.env.PORT) || 3847;
 
 const { gameData, calculator, itemsById } = loadGameData();
+loadLangMaps();
 
 const app = express();
 app.use(cors());
@@ -20,7 +27,12 @@ app.get("/api/health", (_req, res) => {
     version: gameData.version,
     items: gameData.items.length,
     recipes: gameData.recipes.length,
+    locales: getSupportedLocales(),
   });
+});
+
+app.get("/api/locales", (_req, res) => {
+  res.json({ locales: getSupportedLocales() });
 });
 
 app.get("/api/sources", (_req, res) => {
@@ -41,7 +53,10 @@ app.get("/api/items", (req, res) => {
         i.name.toLowerCase().includes(q),
     );
   }
-  res.json(list.slice(0, limit));
+  const lang = resolveLang(req);
+  res.json(
+    list.slice(0, limit).map((item) => localizeItem(item, lang)),
+  );
 });
 
 app.get("/api/items/:id", (req, res) => {
@@ -51,16 +66,19 @@ app.get("/api/items/:id", (req, res) => {
     res.status(404).json({ error: "Item não encontrado" });
     return;
   }
+  const lang = resolveLang(req);
   const recipes = calculator.getRecipesFor(id);
-  res.json({ item, recipes });
+  res.json({ item: localizeItem(item, lang), recipes });
 });
 
 app.get("/api/tags/:id", (req, res) => {
   const tagId = decodeURIComponent(req.params.id);
   const values = calculator.getTagValues(tagId);
+  const lang = resolveLang(req);
   const items = values
     .map((id) => itemsById.get(id))
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((item) => localizeItem(item, lang));
   res.json({ id: tagId, values, items });
 });
 
@@ -93,18 +111,23 @@ app.post("/api/calculate", (req, res) => {
     },
   );
 
+  const lang = resolveLang(req);
   const enriched = {
     ...result,
-    materials: result.materials.map((line) => ({
-      ...line,
-      item: itemsById.get(line.id) ?? {
-        id: line.id,
-        name: line.id.replace("minecraft:", ""),
-        texture: `vanilla/items/${line.id.replace("minecraft:", "")}.png`,
-        hasTexture: false,
-        source: "unknown",
-      },
-    })),
+    materials: result.materials.map((line) => {
+      const base =
+        itemsById.get(line.id) ?? {
+          id: line.id,
+          name: line.id.replace("minecraft:", ""),
+          texture: `vanilla/items/${line.id.replace("minecraft:", "")}.png`,
+          hasTexture: false,
+          source: "unknown",
+        };
+      return {
+        ...line,
+        item: localizeItem(base, lang),
+      };
+    }),
   };
 
   res.json(enriched);

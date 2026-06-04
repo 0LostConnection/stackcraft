@@ -1,4 +1,5 @@
 import { textureUrl, type ItemDef } from "../api";
+import { useI18n } from "../i18n";
 
 const FALLBACK = "/textures/vanilla/items/_missing.png";
 
@@ -8,17 +9,19 @@ interface Props {
 }
 
 export function ItemIcon({ item, size = "md" }: Props) {
+  const { t } = useI18n();
   const src =
     item.hasTexture === false ? FALLBACK : textureUrl(item.texture);
+
+  const title =
+    item.hasTexture === false
+      ? t("noIconTooltip", { name: item.name })
+      : item.name;
 
   return (
     <div
       className={`slot ${size === "sm" ? "slot-sm" : ""} ${item.hasTexture === false ? "slot-no-icon" : ""}`}
-      title={
-        item.hasTexture === false
-          ? `${item.name} (sem ícone 2D — modelo 3D no jogo)`
-          : item.name
-      }
+      title={title}
     >
       <img
         src={src}

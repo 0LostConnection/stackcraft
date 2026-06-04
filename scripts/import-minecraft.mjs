@@ -229,7 +229,7 @@ function buildItemRegistry(lang) {
   return ids;
 }
 
-function main() {
+async function main() {
   if (!fs.existsSync(JAR)) {
     console.error(`JAR not found: ${JAR}`);
     process.exit(1);
@@ -349,6 +349,41 @@ function main() {
     },
   };
 
+  const langDir = path.join(OUT_DATA, "lang");
+  fs.mkdirSync(langDir, { recursive: true });
+
+  const enMap = Object.fromEntries(names);
+  fs.writeFileSync(path.join(langDir, "en_us.json"), JSON.stringify(enMap));
+
+  const REMOTE_LANG = {
+    pt_br:
+      "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/lang/pt_br.json",
+    es_es:
+      "https://raw.githubusercontent.com/InventivetalentDev/minecraft-assets/1.21.4/assets/minecraft/lang/es_es.json",
+  };
+
+  for (const [code, url] of Object.entries(REMOTE_LANG)) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const map = {};
+      for (const [key, value] of Object.entries(json)) {
+        if (typeof value !== "string") continue;
+        if (key.startsWith("item.minecraft.")) {
+          map[`minecraft:${key.slice("item.minecraft.".length)}`] = value;
+        }
+        if (key.startsWith("block.minecraft.")) {
+          map[`minecraft:${key.slice("block.minecraft.".length)}`] = value;
+        }
+      }
+      fs.writeFileSync(path.join(langDir, `${code}.json`), JSON.stringify(map));
+      console.log(`Lang ${code}: ${Object.keys(map).length} names`);
+    } catch (err) {
+      console.warn(`Lang ${code} skipped:`, err.message);
+    }
+  }
+
   fs.writeFileSync(path.join(OUT_DATA, "manifest.json"), JSON.stringify(manifest, null, 2));
   fs.writeFileSync(path.join(OUT_DATA, "items.json"), JSON.stringify(items));
   fs.writeFileSync(path.join(OUT_DATA, "recipes.json"), JSON.stringify(recipes));
@@ -375,4 +410,7 @@ function main() {
   console.log(`Data written to ${OUT_DATA}`);
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
