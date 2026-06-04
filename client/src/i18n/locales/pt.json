@@ -41,6 +41,8 @@
   "stacksMany": "pacotes",
   "stackDetail": "({stacks}×64 + {remainder})",
   "stackDetailFull": "({stacks}×64)",
+  "treeExpand": "Expandir detalhamento da receita",
+  "treeCollapse": "Recolher detalhamento da receita",
   "unresolved": "Alguns itens não têm receita no banco de dados: {list}",
   "noIconTooltip": "{name} (sem ícone 2D — modelo 3D no jogo)",
   "searching": "Buscando…",

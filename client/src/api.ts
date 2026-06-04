@@ -18,8 +18,19 @@ export interface MaterialLine {
   item: ItemDef;
 }
 
+export interface MaterialNode {
+  id: string;
+  count: number;
+  stacks: StackBreakdown;
+  isBase?: boolean;
+  isLeaf?: boolean;
+  item: ItemDef;
+  children?: MaterialNode[];
+}
+
 export interface CalculateResult {
   materials: MaterialLine[];
+  tree: MaterialNode[];
   unresolved: string[];
 }
 

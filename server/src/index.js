@@ -105,6 +105,25 @@ app.get("/api/tags", requireData, (_req, res) => {
   res.json(gameData.tags);
 });
 
+function itemFallback(id) {
+  return {
+    id,
+    name: id.replace("minecraft:", ""),
+    texture: `vanilla/items/${id.replace("minecraft:", "")}.png`,
+    hasTexture: false,
+    source: "unknown",
+  };
+}
+
+function enrichMaterialNode(node, lang) {
+  const base = itemsById.get(node.id) ?? itemFallback(node.id);
+  return {
+    ...node,
+    item: localizeItem(base, lang),
+    children: node.children?.map((child) => enrichMaterialNode(child, lang)),
+  };
+}
+
 app.post("/api/calculate", requireData, (req, res) => {
   const {
     targets = [],
@@ -134,19 +153,13 @@ app.post("/api/calculate", requireData, (req, res) => {
   const enriched = {
     ...result,
     materials: result.materials.map((line) => {
-      const base =
-        itemsById.get(line.id) ?? {
-          id: line.id,
-          name: line.id.replace("minecraft:", ""),
-          texture: `vanilla/items/${line.id.replace("minecraft:", "")}.png`,
-          hasTexture: false,
-          source: "unknown",
-        };
+      const base = itemsById.get(line.id) ?? itemFallback(line.id);
       return {
         ...line,
         item: localizeItem(base, lang),
       };
     }),
+    tree: result.tree.map((node) => enrichMaterialNode(node, lang)),
   };
 
   res.json(enriched);

@@ -1,6 +1,7 @@
 import type { CalculateResult, TargetEntry } from "../api";
 import { useI18n } from "../i18n";
 import { MaterialListSection, type DisplayLine } from "./MaterialListSection";
+import { MaterialTreeSection } from "./MaterialTreeSection";
 
 interface Props {
   targets: TargetEntry[];
@@ -66,18 +67,18 @@ export function ResultsPanel({ targets, result, loading }: Props) {
       )}
 
       {!loading && craftResult && craftResult.materials.length > 0 && (
-        <MaterialListSection
+        <MaterialTreeSection
           title={t("craftListTitle")}
           subtitle={t("craftListSub")}
-          lines={craftResult.materials}
+          tree={craftResult.tree}
         />
       )}
 
       {!loading && hasTargets && craftResult && craftResult.materials.length === 0 && (
-        <MaterialListSection
+        <MaterialTreeSection
           title={t("craftListTitle")}
           subtitle={t("craftListSub")}
-          lines={[]}
+          tree={[]}
           emptyMessage={t("craftEmpty")}
         />
       )}

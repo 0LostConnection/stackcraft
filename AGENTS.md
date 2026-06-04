@@ -9,7 +9,7 @@ Web material calculator for Minecraft builds. The user specifies **desired items
 Two lists in the right panel (always separate):
 
 1. **Build list** — items requested by the user (updates in real time; stacks + remainder).
-2. **Materials to craft** — base ingredients after recipe expansion (only after clicking Calculate; disappears when the request list changes or becomes empty).
+2. **Materials to craft** — base ingredients after recipe expansion, shown as an **expandable recipe tree** (one root per target; base materials highlighted). Flat totals remain in the API `materials` field. Only after clicking Calculate; disappears when the request list changes or becomes empty.
 
 ## Stack
 
@@ -40,7 +40,7 @@ minecraft-material-calc/
 │   │   ├── App.tsx           ← main state
 │   │   ├── api.ts            ← fetch + setApiLang
 │   │   ├── i18n/             ← UI: en (default), pt, es
-│   │   ├── components/       ← UI (LanguageSelector, ResultsPanel, …)
+│   │   ├── components/       ← UI (LanguageSelector, ResultsPanel, MaterialTreeSection, …)
 │   │   └── hooks/useStackFormat.ts
 │   └── public/textures/vanilla/items/*.png
 ├── data/
@@ -118,6 +118,20 @@ flowchart LR
 - `batches = ceil(count / resultCount)`; ingredients multiplied.
 - Recipe cycle → treated as a final material (avoids infinite loop).
 - No recipe → accumulates in `unresolved` and in the total.
+- **`tree`** — parallel per-target expansion trees (`MaterialNode`); same recipe/tag/base rules as flat totals.
+
+### `MaterialNode`
+
+```ts
+{
+  id: "minecraft:oak_planks",
+  count: 40,
+  stacks: { total, stacks, remainder, stackSize },
+  isBase?: true,   // stopped at configured base material
+  isLeaf?: true,   // no recipe or cycle
+  children?: MaterialNode[]
+}
+```
 
 ## HTTP API (`server/src/index.js`)
 
@@ -147,6 +161,8 @@ Base: `http://localhost:3847`
 }
 ```
 
+**Response:** `{ materials, tree, unresolved }` — `materials` is flat sorted totals; `tree` is one `MaterialNode` root per target (API adds localized `item` on each node).
+
 ## React client — state rules (`App.tsx`)
 
 **Invalidate craft result** (`setResult(null)`) when these change:
@@ -169,8 +185,9 @@ Base: `http://localhost:3847`
 |-----------|----------------|
 | `LanguageSelector` | Flags; closed = circle; open = pill; click when closed opens, when open selects |
 | `ItemSearch` | Item autocomplete |
-| `ResultsPanel` | Two sections + HTML legend via `t("legend")` |
-| `MaterialListSection` | List with `useStackFormat()` |
+| `ResultsPanel` | Build list + craft tree + HTML legend via `t("legend")` |
+| `MaterialListSection` | Flat list with `useStackFormat()` (build list) |
+| `MaterialTreeSection` | Collapsible recipe tree for craft materials |
 | `ItemIcon` | Local texture or placeholder SVG |
 
 ## Internationalization
